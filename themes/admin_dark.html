@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUTH // TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020c02;
+  --surf:#040f04;
+  --surf2:#061006;
+  --border:#0a2a0a;
+  --acc:#00ff41;
+  --acc2:#00cc33;
+  --dim:#1a4a1a;
+  --dim2:#2a6a2a;
+  --danger:#ff3c3c;
+  --warn:#ffb300;
+  --text:#a0d0a0;
+  --bright:#e0ffe0;
+  --font:'Share Tech Mono',monospace;
+  --font2:'VT323',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:13px}
+body{
+  background:var(--bg);
+  color:var(--acc);
+  font-family:var(--font);
+  min-height:100vh;
+  cursor:default;
+}
+/* CRT scanlines */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);
+  animation:scanroll 8s linear infinite;
+}
+@keyframes scanroll{from{background-position:0 0}to{background-position:0 100%}}
+/* CRT glow */
+body::after{
+  content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,rgba(0,255,65,.04) 0%,transparent 70%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--dim2)}
+
+/* ── HEADER ── */
+header{
+  border-bottom:1px solid var(--border);
+  padding:0 24px;height:44px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--surf);
+  position:sticky;top:0;z-index:100;
+}
+.logo{
+  font-family:var(--font2);font-size:22px;color:var(--acc);
+  letter-spacing:2px;text-shadow:0 0 10px var(--acc);
+}
+.logo span{color:var(--dim2);font-size:14px;margin-left:8px}
+.blink{animation:blink .8s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:11px;color:var(--dim2)}
+.srv-ok{color:var(--acc);text-shadow:0 0 6px var(--acc)}
+.srv-err{color:var(--danger)}
+
+/* ── AUTH GATE ── */
+#auth-gate{
+  display:flex;align-items:center;justify-content:center;
+  min-height:calc(100vh - 44px);
+}
+.abox{
+  border:1px solid var(--acc);
+  padding:32px 36px;width:420px;
+  background:var(--surf);
+  box-shadow:0 0 30px rgba(0,255,65,.1),inset 0 0 30px rgba(0,255,65,.02);
+  position:relative;
+}
+.abox::before{
+  content:'┌─ AUTH REQUIRED ─────────────────────────┐';
+  position:absolute;top:-10px;left:0;right:0;
+  font-size:10px;color:var(--dim2);
+  padding:0 8px;
+  text-shadow:0 0 4px var(--acc2);
+}
+.abox::after{
+  content:'└────────────────────────────────────────────┘';
+  position:absolute;bottom:-10px;left:0;right:0;
+  font-size:10px;color:var(--dim2);padding:0 8px;
+}
+.abox h2{font-family:var(--font2);font-size:20px;color:var(--acc);margin-bottom:4px;text-shadow:0 0 8px var(--acc)}
+.abox p{font-size:11px;color:var(--dim2);margin-bottom:24px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;color:var(--dim2);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.field label::before{content:'> ';color:var(--acc2)}
+input[type=password],input[type=text],input[type=url],input[type=number]{
+  width:100%;background:var(--bg);border:1px solid var(--dim);
+  color:var(--acc);font-family:var(--font);font-size:13px;
+  padding:8px 10px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  text-shadow:0 0 4px rgba(0,255,65,.3);
+}
+input:focus{border-color:var(--acc);box-shadow:0 0 8px rgba(0,255,65,.2)}
+.err{color:var(--danger);font-size:11px;margin-top:6px;min-height:14px}
+button{cursor:pointer;font-family:var(--font);border:none;transition:all .15s}
+.btn-p{
+  background:transparent;color:var(--acc);
+  border:1px solid var(--acc);font-size:12px;
+  padding:8px 18px;text-transform:uppercase;letter-spacing:1px;
+}
+.btn-p:hover{background:var(--acc);color:var(--bg);box-shadow:0 0 12px var(--acc)}
+.btn-p:disabled{opacity:.3;cursor:not-allowed}
+.btn-p-full{width:100%;margin-top:8px}
+.btn-s{background:transparent;color:var(--dim2);border:1px solid var(--dim);font-size:11px;padding:5px 10px}
+.btn-s:hover{border-color:var(--acc2);color:var(--acc)}
+.btn-d{background:transparent;color:var(--danger);border:1px solid rgba(255,60,60,.3);font-size:11px;padding:4px 8px}
+.btn-d:hover{border-color:var(--danger);box-shadow:0 0 6px rgba(255,60,60,.2)}
+.btn-w{background:transparent;color:var(--warn);border:1px solid rgba(255,179,0,.3);font-size:11px;padding:4px 8px}
+.btn-w:hover{border-color:var(--warn)}
+.btn-g{background:transparent;color:var(--acc);border:1px solid rgba(0,255,65,.3);font-size:11px;padding:4px 8px}
+.btn-g:hover{border-color:var(--acc);box-shadow:0 0 6px rgba(0,255,65,.2)}
+
+/* ── LAYOUT ── */
+#app{display:none}
+.layout{display:grid;grid-template-columns:210px 1fr;min-height:calc(100vh - 44px)}
+
+/* ── NAV ── */
+nav{
+  border-right:1px solid var(--border);
+  background:var(--surf);
+  padding:12px 0;
+  position:sticky;top:44px;
+  height:calc(100vh - 44px);
+  overflow-y:auto;
+}
+.ns{
+  padding:12px 16px 4px;
+  font-size:9px;color:var(--dim2);
+  text-transform:uppercase;letter-spacing:2px;
+}
+.ns::before{content:'// ';color:var(--acc2)}
+.ni{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 16px;font-size:12px;
+  cursor:pointer;color:var(--dim2);
+  border-left:2px solid transparent;
+  transition:all .1s;
+}
+.ni:hover{color:var(--text);background:rgba(0,255,65,.03)}
+.ni.active{color:var(--acc);border-left-color:var(--acc);background:rgba(0,255,65,.05);text-shadow:0 0 6px rgba(0,255,65,.4)}
+.ni-icon{width:16px;text-align:center;flex-shrink:0;font-size:11px}
+.ni::before{content:'';width:4px;height:4px;background:currentColor;border-radius:50%;flex-shrink:0;opacity:.4}
+.ni.active::before{opacity:1;box-shadow:0 0 4px currentColor}
+
+/* ── MAIN ── */
+main{padding:20px 24px;overflow-y:auto}
+.page{display:none}
+.page.active{display:block;animation:fi .12s ease}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.page-title{font-family:var(--font2);font-size:22px;color:var(--acc);text-shadow:0 0 8px rgba(0,255,65,.4)}
+.page-title::before{content:'> ';color:var(--dim2)}
+.page-sub{font-size:10px;color:var(--dim2);margin-top:2px;padding-left:18px}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.sc{
+  border:1px solid var(--border);padding:14px;
+  background:var(--surf);position:relative;
+  transition:border-color .15s;
+}
+.sc:hover{border-color:var(--dim2)}
+.sc::before{content:'[STAT]';position:absolute;top:6px;right:8px;font-size:8px;color:var(--dim);letter-spacing:1px}
+.sv{font-family:var(--font2);font-size:32px;color:var(--acc);text-shadow:0 0 10px rgba(0,255,65,.4);line-height:1}
+.sl{font-size:9px;color:var(--dim2);margin-top:4px;text-transform:uppercase;letter-spacing:1.5px}
+.sc-trend{position:absolute;bottom:8px;right:8px;font-size:10px}
+.trend-up{color:var(--acc)}
+.trend-dn{color:var(--danger)}
+
+/* ── CHART ── */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.chart-box{border:1px solid var(--border);padding:14px;background:var(--surf)}
+.chart-title{font-size:9px;color:var(--dim2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+.chart-title::before{content:'# ';color:var(--acc2)}
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:48px}
+.bar{flex:1;background:var(--acc);opacity:.5;transition:opacity .15s;min-width:3px}
+.bar:hover{opacity:1}
+.chart-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--dim);margin-top:4px}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{
+  background:var(--surf2);padding:7px 10px;
+  text-align:left;color:var(--dim2);font-weight:400;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;font-size:9px;
+  text-transform:uppercase;letter-spacing:1px;
+}
+td{padding:7px 10px;border-bottom:1px solid rgba(10,42,10,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,255,65,.02)}
+.badge{display:inline-block;padding:1px 6px;font-size:9px;letter-spacing:.5px;border:1px solid}
+.bg{border-color:rgba(0,255,65,.3);color:var(--acc);background:rgba(0,255,65,.05)}
+.br{border-color:rgba(255,60,60,.3);color:var(--danger);background:rgba(255,60,60,.05)}
+.bb{border-color:rgba(0,150,255,.3);color:#4af;background:rgba(0,150,255,.05)}
+.bw{border-color:rgba(255,179,0,.3);color:var(--warn);background:rgba(255,179,0,.05)}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.search-input{
+  background:var(--bg);border:1px solid var(--dim);
+  color:var(--acc);font-family:var(--font);font-size:11px;
+  padding:5px 9px;outline:none;flex:1;min-width:140px;max-width:240px;
+}
+.search-input::placeholder{color:var(--dim)}
+.search-input:focus{border-color:var(--acc2)}
+
+/* ── INVITE ── */
+.inv-bar{border:1px solid var(--border);padding:14px;background:var(--surf);margin-bottom:14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.inv-bar .field{margin-bottom:0}
+.inv-bar input{width:64px}
+.inv-codes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ic{
+  background:rgba(0,255,65,.05);border:1px solid rgba(0,255,65,.2);
+  padding:4px 10px;font-size:11px;color:var(--acc2);
+  cursor:pointer;transition:all .12s;
+}
+.ic:hover{background:rgba(0,255,65,.12);border-color:var(--acc)}
+.ic.copied{border-color:var(--acc);color:var(--acc);text-shadow:0 0 6px var(--acc)}
+
+/* ── AUDIT ── */
+.alog{border:1px solid var(--border)}
+.ale{display:flex;gap:10px;padding:6px 10px;border-bottom:1px solid rgba(10,42,10,.4);font-size:10px;align-items:center}
+.ale:last-child{border-bottom:none}
+.ale:hover{background:rgba(0,255,65,.02)}
+.alt{color:var(--dim2);white-space:nowrap;flex-shrink:0;width:120px;font-size:9px}
+.alev{width:140px;flex-shrink:0}
+.aluser{width:110px;flex-shrink:0;color:var(--text)}
+.alip{color:var(--dim2);font-size:9px;flex:1}
+.ald{color:var(--dim2);font-size:9px}
+
+/* ── SESSIONS ── */
+.sess-card{border:1px solid var(--border);padding:10px 14px;background:var(--surf);margin-bottom:4px;display:flex;align-items:center;gap:12px}
+.sess-user{font-size:14px;color:var(--acc);min-width:120px;text-shadow:0 0 4px rgba(0,255,65,.3)}
+.sess-detail{font-size:9px;color:var(--dim2);flex:1}
+.sess-ping{font-size:9px;color:var(--acc2)}
+
+/* ── SETTINGS ── */
+.settings-section{border:1px solid var(--border);padding:16px;background:var(--surf);margin-bottom:12px}
+.settings-section h3{font-size:9px;color:var(--dim2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+.settings-section h3::before{content:'## ';color:var(--acc2)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(10,42,10,.4)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:12px;color:var(--text)}
+.setting-desc{font-size:9px;color:var(--dim2);margin-top:2px}
+.toggle{width:34px;height:18px;background:var(--border);border:1px solid var(--dim);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.toggle.on{background:rgba(0,255,65,.15);border-color:var(--acc);box-shadow:0 0 6px rgba(0,255,65,.2)}
+.toggle::after{content:'';position:absolute;width:10px;height:10px;background:var(--dim2);top:3px;left:3px;transition:all .2s}
+.toggle.on::after{background:var(--acc);transform:translateX(16px);box-shadow:0 0 4px var(--acc)}
+
+/* ── MISC ── */
+.load{color:var(--dim2);font-size:11px;padding:14px 0}
+.load::before{content:'> '}
+.empty{color:var(--dim2);font-size:11px;padding:20px;text-align:center;border:1px solid var(--border)}
+.actions-cell{display:flex;gap:4px;flex-wrap:wrap}
+.refresh-hint{font-size:9px;color:var(--dim);margin-left:auto}
+select{background:var(--bg);border:1px solid var(--dim);color:var(--acc);font-family:var(--font);font-size:11px;padding:5px 9px;outline:none}
+select:focus{border-color:var(--acc2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AUTH<span>// ADMIN TERMINAL</span><span class="blink">_</span></div>
+  <div class="hdr-right">
+    <span id="srv-label" class="srv-ok">● ONLINE</span>
+    <span id="hdr-clock">--:--:--</span>
+  </div>
+</header>
+
+<div id="auth-gate">
+  <div class="abox">
+    <h2>ACCESS REQUIRED</h2>
+    <p>Введите адрес сервера и admin key для подключения.</p>
+    <div class="field"><label>Server URL</label><input type="url" id="srv-url" value="http://127.0.0.1:8000"></div>
+    <div class="field"><label>Admin Key</label><input type="password" id="key-in" autocomplete="off"></div>
+    <div class="err" id="aerr"></div>
+    <button class="btn-p btn-p-full" onclick="tryLogin()">[ CONNECT ]</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="layout">
+    <nav>
+      <div class="ns">Overview</div>
+      <div class="ni active" data-page="stats" onclick="nav(this)"><span class="ni-icon">▸</span>Дашборд</div>
+      <div class="ns">Manage</div>
+      <div class="ni" data-page="users" onclick="nav(this)"><span class="ni-icon">▸</span>Пользователи</div>
+      <div class="ni" data-page="sessions" onclick="nav(this)"><span class="ni-icon">▸</span>Сессии</div>
+      <div class="ni" data-page="invites" onclick="nav(this)"><span class="ni-icon">▸</span>Инвайты</div>
+      <div class="ns">Monitor</div>
+      <div class="ni" data-page="audit" onclick="nav(this)"><span class="ni-icon">▸</span>Лог событий</div>
+      <div class="ns">System</div>
+      <div class="ni" data-page="settings" onclick="nav(this)"><span class="ni-icon">▸</span>Настройки</div>
+      <div class="ni" onclick="logout()" style="color:var(--danger);margin-top:8px"><span class="ni-icon">✕</span>Выйти</div>
+    </nav>
+    <main>
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-stats">
+        <div class="page-header">
+          <div><div class="page-title">DASHBOARD</div><div class="page-sub">Общая статистика сервера</div></div>
+          <button class="btn-s" onclick="loadStats()">↻ refresh</button>
+        </div>
+        <div class="stats-grid" id="scards"><div class="load">Загрузка...</div></div>
+        <div class="chart-row">
+          <div class="chart-box">
+            <div class="chart-title">Входы за 7 дней</div>
+            <div class="mini-chart" id="chart-logins"></div>
+            <div class="chart-labels" id="chart-logins-labels"></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Регистрации за 7 дней</div>
+            <div class="mini-chart" id="chart-regs"></div>
+            <div class="chart-labels" id="chart-regs-labels"></div>
+          </div>
+        </div>
+        <div class="page-header" style="margin-top:6px;margin-bottom:10px;border-bottom:0">
+          <div class="page-sub" style="padding-left:0"># Последние события</div>
+        </div>
+        <div id="recent-log"><div class="load">Загрузка...</div></div>
+      </div>
+
+      <!-- USERS -->
+      <div class="page" id="page-users">
+        <div class="page-header">
+          <div><div class="page-title">USERS</div><div class="page-sub" id="users-count">—</div></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn-s" onclick="loadUsers()">↻ refresh</button>
+          <input type="text" class="search-input" id="user-search" placeholder="поиск по имени..." oninput="filterUsers()">
+          <span class="refresh-hint" id="users-updated"></span>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>#</th><th>Имя</th><th>Статус</th><th>HWID</th><th>Инвайт</th><th>IP</th><th>Регистрация</th><th>Последний вход</th><th>Действия</th></tr></thead>
+          <tbody id="utb"><tr><td colspan="9" class="load">Загрузка...</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- SESSIONS -->
+      <div class="page" id="page-sessions">
+        <div class="page-header">
+          <div><div class="page-title">SESSIONS</div><div class="page-sub">Активные подключения</div></div>
+          <button class="btn-s" onclick="loadSessions()">↻ refresh</button>
+        </div>
+        <div id="sess-list"><div class="load">Загрузка...</div></div>
+      </div>
+
+      <!-- INVITES -->
+      <div class="page" id="page-invites">
+        <div class="page-header">
+          <div><div class="page-title">INVITES</div><div class="page-sub" id="inv-count">—</div></div>
+        </div>
+        <div class="inv-bar">
+          <div class="field"><label>Количество</label><input type="number" id="icount" value="1" min="1" max="100"></div>
+          <button class="btn-p" onclick="createInvites()">[ GENERATE ]</button>
+        </div>
+        <div class="inv-codes" id="newcodes"></div>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn-s" onclick="loadInvites()">↻ refresh</button>
+          <input type="text" class="search-input" id="inv-search" placeholder="поиск по коду..." oninput="filterInvites()">
+          <label style="font-size:10px;color:var(--dim2);display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="checkbox" id="inv-free-only" onchange="filterInvites()"> только свободные
+          </label>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Код</th><th>Статус</th><th>Создан</th><th>Использован кем</th></tr></thead>
+          <tbody id="itb"><tr><td colspan="4" class="load">Загрузка...</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- AUDIT -->
+      <div class="page" id="page-audit">
+        <div class="page-header">
+          <div><div class="page-title">AUDIT LOG</div><div class="page-sub">Все действия в системе</div></div>
+          <button class="btn-s" onclick="loadAudit()">↻ refresh</button>
+        </div>
+        <div class="toolbar">
+          <input type="text" class="search-input" id="audit-search" placeholder="поиск..." oninput="filterAudit()">
+          <select id="audit-filter" onchange="filterAudit()">
+            <option value="">Все события</option>
+            <option value="LOGIN_OK">Входы</option>
+            <option value="LOGIN_FAIL">Ошибки входа</option>
+            <option value="REGISTER_OK">Регистрации</option>
+            <option value="USER_BANNED">Баны</option>
+            <option value="HWID">HWID события</option>
+          </select>
+          <span class="refresh-hint" id="audit-count"></span>
+        </div>
+        <div id="alog-wrap"><div class="load">Загрузка...</div></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div><div class="page-title">SETTINGS</div><div class="page-sub">Конфигурация сессии</div></div>
+        </div>
+        <div class="settings-section">
+          <h3>Connection</h3>
+          <div class="setting-row"><div><div class="setting-label">Server URL</div><div class="setting-desc" id="set-url">—</div></div></div>
+          <div class="setting-row"><div><div class="setting-label">Status</div><div class="setting-desc" id="set-status">—</div></div></div>
+        </div>
+        <div class="settings-section">
+          <h3>Interface</h3>
+          <div class="setting-row">
+            <div><div class="setting-label">Автообновление</div><div class="setting-desc">Каждые 30 сек</div></div>
+            <div class="toggle on" id="tog-autorefresh" onclick="toggleSetting('autorefresh')"></div>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-label">Звук</div><div class="setting-desc">Уведомления</div></div>
+            <div class="toggle" id="tog-sound" onclick="toggleSetting('sound')"></div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>Danger zone</h3>
+          <div class="setting-row">
+            <div><div class="setting-label">Завершить сессию</div><div class="setting-desc">Выйти из консоли</div></div>
+            <button class="btn-d" onclick="logout()">DISCONNECT</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+let KEY='',SRV='',_autorefresh=true;
+let _allUsers=[],_allInvites=[],_allAudit=[];
+
+async function tryLogin(){
+  const k=document.getElementById('key-in').value.trim();
+  const s=document.getElementById('srv-url').value.trim().replace(/\/$/,'');
+  if(!k||!s)return;
+  document.querySelector('.btn-p-full').disabled=true;
+  try{
+    const r=await fetch(s+'/admin/stats',{headers:{'X-Admin-Key':k}});
+    if(r.ok){
+      KEY=k;SRV=s;
+      document.getElementById('auth-gate').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.getElementById('set-url').textContent=SRV;
+      loadAll();startClock();startPing();
+      if(_autorefresh)startAutoRefresh();
+    }else{document.getElementById('aerr').textContent='[ERR] Неверный ключ или сервер недоступен';}
+  }catch(e){document.getElementById('aerr').textContent='[ERR] '+e.message;}
+  document.querySelector('.btn-p-full').disabled=false;
+}
+document.getElementById('key-in').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
+document.getElementById('srv-url').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
+function logout(){KEY='';SRV='';document.getElementById('auth-gate').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('key-in').value='';}
+
+async function api(p,o={}){
+  const r=await fetch(SRV+p,{...o,headers:{'X-Admin-Key':KEY,'Content-Type':'application/json',...(o.headers||{})}});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+
+function nav(el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const pg=el.dataset.page;
+  document.getElementById('page-'+pg).classList.add('active');
+  if(pg==='stats')loadStats();
+  if(pg==='users')loadUsers();
+  if(pg==='sessions')loadSessions();
+  if(pg==='invites')loadInvites();
+  if(pg==='audit')loadAudit();
+}
+function loadAll(){loadStats();loadUsers();loadInvites();loadAudit();loadSessions();}
+
+async function loadStats(){
+  const d=await api('/admin/stats');
+  const prev=JSON.parse(localStorage.getItem('prev_stats')||'{}');
+  document.getElementById('scards').innerHTML=
+    card(d.total_users,'Пользователей',prev.total_users)+
+    card(d.free_invites,'Свободных инвайтов',prev.free_invites)+
+    card(d.used_invites,'Использованных',prev.used_invites)+
+    card(d.logins_24h,'Входов за 24ч',prev.logins_24h);
+  localStorage.setItem('prev_stats',JSON.stringify(d));
+  document.getElementById('set-status').textContent='ONLINE';
+  buildCharts();
+  const al=await api('/admin/audit?limit=8');
+  document.getElementById('recent-log').innerHTML=renderAuditRows(al.log);
+}
+function card(v,l,prev){
+  let trend='';
+  if(prev!==undefined&&prev!==null){const diff=v-prev;if(diff>0)trend=`<span class="sc-trend trend-up">▲${diff}</span>`;else if(diff<0)trend=`<span class="sc-trend trend-dn">▼${Math.abs(diff)}</span>`;}
+  return `<div class="sc">${trend}<div class="sv">${v}</div><div class="sl">${l}</div></div>`;
+}
+async function buildCharts(){
+  const al=await api('/admin/audit?limit=500');
+  const days=7,logins=new Array(days).fill(0),regs=new Array(days).fill(0),labels=[],now=new Date();
+  for(let i=days-1;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);labels.push(d.toLocaleDateString('ru',{day:'2-digit',month:'2-digit'}));}
+  al.log.forEach(e=>{const ts=new Date(e.ts);const diff=Math.floor((now-ts)/(1000*60*60*24));if(diff<days){const idx=days-1-diff;if(e.event==='LOGIN_OK')logins[idx]++;if(e.event==='REGISTER_OK')regs[idx]++;}});
+  renderBars('chart-logins',logins);renderBars('chart-regs',regs);
+  document.getElementById('chart-logins-labels').innerHTML=labels.map(l=>`<span>${l}</span>`).join('');
+  document.getElementById('chart-regs-labels').innerHTML=labels.map(l=>`<span>${l}</span>`).join('');
+}
+function renderBars(id,data){const max=Math.max(...data,1);document.getElementById(id).innerHTML=data.map(v=>`<div class="bar" style="height:${Math.max(4,Math.round(v/max*100))}%" title="${v}"></div>`).join('');}
+
+async function loadUsers(){
+  const d=await api('/admin/users');_allUsers=d.users;
+  document.getElementById('users-count').textContent=d.users.length+' пользователей';
+  document.getElementById('users-updated').textContent='upd: '+new Date().toLocaleTimeString('ru');
+  renderUsers(_allUsers);
+}
+function filterUsers(){const q=document.getElementById('user-search').value.toLowerCase();renderUsers(_allUsers.filter(u=>u.username.toLowerCase().includes(q)||(u.ip_address||'').includes(q)));}
+function renderUsers(users){
+  const tb=document.getElementById('utb');
+  if(!users.length){tb.innerHTML='<tr><td colspan="9" class="empty">[ EMPTY ]</td></tr>';return;}
+  tb.innerHTML=users.map(u=>`<tr>
+    <td style="color:var(--dim2)">${u.id}</td>
+    <td style="color:var(--acc)">${u.username}</td>
+    <td>${u.banned?'<span class="badge br">BANNED</span>':'<span class="badge bg">ACTIVE</span>'}</td>
+    <td style="color:var(--dim2);font-size:10px" title="${u.hwid||''}">${u.hwid?u.hwid.substr(0,10)+'...':'—'}</td>
+    <td style="color:var(--dim2);font-size:10px">${u.invite_code}</td>
+    <td style="color:var(--dim2)">${u.ip_address||'—'}</td>
+    <td style="color:var(--dim2)">${fd(u.created_at)}</td>
+    <td style="color:var(--dim2)">${u.last_login?fd(u.last_login):'—'}</td>
+    <td><div class="actions-cell">
+      ${u.banned?`<button class="btn-g" onclick="unbanUser('${u.username}')">unban</button>`:`<button class="btn-w" onclick="banUser('${u.username}')">ban</button>`}
+      <button class="btn-d" onclick="delUser('${u.username}')">del</button>
+      <button class="btn-s" onclick="resetHwid('${u.username}')" title="Сбросить HWID">hwid↺</button>
+    </div></td>
+  </tr>`).join('');
+}
+async function banUser(u){if(!confirm(`Ban "${u}"?`))return;await api('/admin/users/'+u+'/ban',{method:'POST'});loadUsers();loadStats();}
+async function unbanUser(u){await api('/admin/users/'+u+'/unban',{method:'POST'});loadUsers();}
+async function delUser(u){if(!confirm(`Delete "${u}"?`))return;await api('/admin/users/'+u,{method:'DELETE'});loadUsers();loadStats();}
+async function resetHwid(u){if(!confirm(`Reset HWID for "${u}"?`))return;await api('/admin/users/'+u+'/hwid',{method:'DELETE'});loadUsers();}
+
+async function loadSessions(){
+  const d=await api('/admin/sessions');const box=document.getElementById('sess-list');
+  if(!d.sessions.length){box.innerHTML='<div class="empty">[ NO ACTIVE SESSIONS ]</div>';return;}
+  box.innerHTML=d.sessions.map(s=>`<div class="sess-card">
+    <div class="sess-user">${s.username}</div>
+    <div class="sess-detail">IP: ${s.ip||'—'} · HWID: ${s.hwid?s.hwid.substr(0,10)+'...':'—'} · ${fd(s.created_at)}</div>
+    <div class="sess-ping">ping: ${fd(s.last_ping)}</div>
+  </div>`).join('');
+}
+
+async function loadInvites(){
+  const d=await api('/admin/invites');_allInvites=d.invites;
+  document.getElementById('inv-count').textContent=d.invites.filter(i=>!i.used).length+' свободных / '+d.invites.length+' всего';
+  filterInvites();
+}
+function filterInvites(){
+  const q=document.getElementById('inv-search').value.toLowerCase();
+  const freeOnly=document.getElementById('inv-free-only').checked;
+  let list=_allInvites.filter(i=>i.code.toLowerCase().includes(q)||(i.used_by||'').toLowerCase().includes(q));
+  if(freeOnly)list=list.filter(i=>!i.used);
+  const tb=document.getElementById('itb');
+  if(!list.length){tb.innerHTML='<tr><td colspan="4" class="empty">[ EMPTY ]</td></tr>';return;}
+  tb.innerHTML=list.map(i=>`<tr>
+    <td><span class="ic" onclick="cp(this,'${i.code}')">${i.code}</span></td>
+    <td>${i.used?'<span class="badge br">USED</span>':'<span class="badge bg">FREE</span>'}</td>
+    <td style="color:var(--dim2)">${fd(i.created_at)}</td>
+    <td style="color:var(--dim2)">${i.used_by||'—'}</td>
+  </tr>`).join('');
+}
+async function createInvites(){
+  const c=+document.getElementById('icount').value||1;
+  const d=await api('/admin/invite?count='+c,{method:'POST'});
+  document.getElementById('newcodes').innerHTML=d.codes.map(c=>`<span class="ic" onclick="cp(this,'${c}')">${c}</span>`).join('');
+  loadInvites();loadStats();
+}
+function cp(el,code){navigator.clipboard.writeText(code).then(()=>{const o=el.textContent;el.classList.add('copied');el.textContent='✓ copied';setTimeout(()=>{el.classList.remove('copied');el.textContent=o;},1400);});}
+
+async function loadAudit(){
+  const d=await api('/admin/audit?limit=500');_allAudit=d.log;
+  document.getElementById('audit-count').textContent=d.log.length+' записей';
+  filterAudit();
+}
+function filterAudit(){
+  const q=document.getElementById('audit-search').value.toLowerCase();
+  const f=document.getElementById('audit-filter').value;
+  let list=_allAudit.filter(e=>{
+    if(f&&!e.event.includes(f))return false;
+    if(q&&!(e.event+e.username+e.ip+e.detail).toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('alog-wrap').innerHTML=`<div class="alog">${renderAuditRows(list)}</div>`;
+}
+const CM={LOGIN_OK:'bg',LOGIN_FAIL:'br',REGISTER_OK:'bb',REGISTER_FAIL:'bw',INVITE_CREATED:'bb',USER_BANNED:'br',USER_UNBANNED:'bg',HWID_MISMATCH:'br',HWID_RESET:'bw',PING_OK:'bg',PING_BANNED:'br'};
+function renderAuditRows(log){
+  return log.map(e=>`<div class="ale">
+    <span class="alt">${fd(e.ts)}</span>
+    <span class="alev"><span class="badge ${CM[e.event]||'bw'}">${e.event}</span></span>
+    <span class="aluser">${e.username||''}</span>
+    <span class="alip">${e.ip||''}</span>
+    <span class="ald">${e.detail||''}</span>
+  </div>`).join('')||'<div class="ale"><span class="alt">[ EMPTY ]</span></div>';
+}
+
+function fd(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('ru',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function startClock(){setInterval(()=>{document.getElementById('hdr-clock').textContent=new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);}
+function startPing(){
+  setInterval(async()=>{
+    if(!KEY)return;
+    try{await api('/admin/stats');document.getElementById('srv-label').textContent='● ONLINE';document.getElementById('srv-label').className='srv-ok';}
+    catch{document.getElementById('srv-label').textContent='● OFFLINE';document.getElementById('srv-label').className='srv-err';}
+  },15000);
+}
+function startAutoRefresh(){
+  setInterval(()=>{
+    if(!KEY||!_autorefresh)return;
+    const pg=document.querySelector('.page.active')?.id?.replace('page-','');
+    if(pg==='stats')loadStats();
+    if(pg==='sessions')loadSessions();
+    if(pg==='audit')loadAudit();
+  },30000);
+}
+function toggleSetting(name){const el=document.getElementById('tog-'+name);el.classList.toggle('on');if(name==='autorefresh')_autorefresh=el.classList.contains('on');}
+</script>
+</body>
+</html>
